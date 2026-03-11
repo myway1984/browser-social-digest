@@ -28,6 +28,7 @@ wechat_fetches/
 *.html
 *.json
 *.txt
+gcm-diagnose.log
 tmp_newrank_*.js
 
 # Keep shareable examples

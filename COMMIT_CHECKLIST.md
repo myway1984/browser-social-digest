@@ -7,6 +7,7 @@
 - `config.example.toml`
 - `config.verify.toml`
 - `pyproject.toml`
+- `docs/openclaw-opencode-prompt-templates.md`
 - `scripts/collect_x_48h_from_browser.py`
 - `scripts/collect_wechat_48h_from_newrank.py`
 - `scripts/run_browser_social_digest.py`
@@ -32,6 +33,7 @@
 - `*.html`
 - `*.json`
 - `*.txt`
+- `gcm-diagnose.log`
 - `__pycache__/`
 - `*.egg-info/`
 

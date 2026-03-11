@@ -1,137 +1,222 @@
-# 社交媒体定时简报原型
+# Browser Social Digest
 
-这是一个可运行的 Python 原型，用来做这条链路：
+Browser-based monitoring and digest generation for:
 
-1. 定时抓取你指定的来源
-2. 去重入库
-3. 按来源生成摘要或简介
-4. 产出 Markdown 简报
-5. 可选发到邮箱
+- `X` account watchlists
+- `WeChat public accounts` discovered through `newrank.cn`
+- structured `Markdown` and `JSON` output for downstream agents
 
-当前项目重点是把主流程搭稳，并把平台差异隔离到适配器层。
+This repo started as an internal workflow and was cleaned up into a reusable public project. The current focus is practical browser automation with a logged-in Chrome session, not a pure API-only collector.
 
-如果你当前最关心的是 X，这个原型现在已经额外支持：
+## What It Does
 
-- 监控多个 X 账号
-- 给账号打分类标签，比如 `AI 科技`、`宏观财经`、`Web3 币圈`
-- 通过命令行指定抓取时间范围
-- 把账号放进独立账号池文件，后续可持续追加
-- API 失败时切到浏览器读取兜底
-- 浏览器兜底会按“本机脚本 -> Chrome Headless dump-dom -> Remote Debugging”顺序尝试
+The project helps you:
 
-## 已支持的接入方式
+1. reuse a logged-in desktop Chrome session
+2. read recent posts from a curated `X` account pool
+3. open `newrank.cn`, inspect account detail pages, and click through to original WeChat articles
+4. produce a structured digest for human reading or agent consumption
 
-- `x`：官方 X API v2 用户时间线
-- `weibo`：实验性微博公开页采集器
-- `wechat`：
-  - `material_api`：你自己的微信公众号素材接口
-  - `feed`：外部 RSS、Atom 或自建中转 Feed
-- `mock`：本地演示数据源，方便先验证整条流程
+## Why Browser-Based
 
-## 快速开始
+Many high-value sources are either rate-limited, partially blocked, or not fully accessible through stable public APIs.
 
-### 1. 安装
+This repo therefore leans on:
 
-```powershell
-python -m pip install -e .
+- `Playwright` + Chrome remote debugging
+- slower, human-like page interaction for `X`
+- Newrank detail-page navigation for `WeChat`
+- JSON + Markdown outputs that other tools can reuse
+
+## Current Status
+
+What is already usable:
+
+- browser-driven `X` scraping from a watchlist
+- browser-driven `WeChat` article extraction from Newrank candidate pages
+- a unified runner that writes timestamped digest files
+- a reusable Codex skill under [`skills/browser-social-digest`](./skills/browser-social-digest)
+
+What is still opinionated or workflow-dependent:
+
+- `WeChat` currently expects a pre-scanned Newrank candidate file
+- the browser session must already be logged in to `X` and `newrank.cn`
+- Newrank may hit daily access caps depending on account state
+
+## Repository Layout
+
+```text
+scripts/
+  collect_x_48h_from_browser.py
+  collect_wechat_48h_from_newrank.py
+  run_browser_social_digest.py
+
+skills/
+  browser-social-digest/
+
+sources/
+  x_accounts.example.csv
+  wechat_accounts.example.csv
+
+src/social_digest/
+  reusable Python package code
 ```
 
-### 2. 准备配置
+## Quick Start
 
-```powershell
-Copy-Item config.example.toml config.toml
-```
-
-先用 `mock` 数据源跑通流程，再逐步打开真实来源。
-
-### 3. 运行一次
-
-```powershell
-social-digest --config config.toml run-once
-```
-
-指定时间范围：
-
-```powershell
-social-digest --config config.toml run-once --start 2026-03-08T00:00:00+08:00 --end 2026-03-08T23:59:59+08:00
-```
-
-### 4. 只抓取不出简报
-
-```powershell
-social-digest --config config.toml fetch
-```
-
-### 5. 按历史数据生成简报
-
-```powershell
-social-digest --config config.toml digest
-```
-
-### 6. 守护运行
-
-```powershell
-social-digest --config config.toml daemon
-```
-
-## 推荐下一步
-
-如果你准备把这个原型真正长期跑起来，下一步最值得补的是：
-
-1. 增加 LLM 摘要器
-2. 增加企业微信、Telegram 或飞书推送
-3. 给微博和第三方公众号接入更稳定的中转层
-4. 改成 Windows 任务计划或服务器守护进程部署
-
-## X 账号池管理
-
-默认账号池文件是 `sources/x_accounts.csv`。
-
-追加一个账号：
-
-```powershell
-social-digest --config config.toml add-x-account --username elonmusk --category macro-finance
-```
-
-列出当前账号池：
-
-```powershell
-social-digest --config config.toml list-x-accounts
-```
-
-CSV 字段说明：
-
-- `username`：X 用户名
-- `category`：分类标签，建议用 `ai-tech`、`macro-finance`、`web3-crypto`
-- `display_name`：可选显示名
-- `enabled`：是否启用
-- `notes`：备注
-
-## X 浏览器兜底
-
-如果 X API token 不可用，或你希望在失败时自动切到浏览器模式，可以保留：
-
-```toml
-strategy = "api_then_browser"
-remote_debug_profile_dir = "secrets/x_chrome_profile"
-remote_debug_port = 9222
-```
-
-浏览器兜底依赖 Playwright：
+### 1. Install
 
 ```powershell
 python -m pip install -e .[browser]
 python -m playwright install chromium
 ```
 
-`remote_debug_profile_dir` 是 Chrome Remote Debugging 使用的持久化用户目录。你如果用这个目录手动登录过一次，后续程序可以复用登录态继续抓取。
+### 2. Prepare your watchlists
 
-## 失败来源说明
+Copy the example files and edit them:
 
-如果某个网页来源最终没有拿到正文，简报里会追加失败说明，并使用这条固定文案：
+```powershell
+Copy-Item sources\x_accounts.example.csv sources\x_accounts.csv
+Copy-Item sources\wechat_accounts.example.csv sources\wechat_accounts.csv
+```
 
-`已依次尝试 curl 移动端 UA、Headless dump-dom、Remote Debugging，仍未获取正文`
+### 3. Start or reuse a logged-in Chrome session
 
-## 分类汇总
+Your Chrome session should:
 
-简报会优先按分类汇总，再从每类里挑出少量代表性更新，避免把多人时间线原样堆出来。当前默认支持的分类名只是建议值，你后面给我新的分类也可以直接继续加。
+- be logged in to `X`
+- be logged in to `newrank.cn`
+- expose remote debugging, usually at `http://127.0.0.1:9222`
+
+### 4. Set required environment variables
+
+At minimum:
+
+```powershell
+$env:WECHAT_NEWRANK_TOKEN = "your_newrank_token"
+```
+
+Optional:
+
+```powershell
+$env:X_CDP_URL = "http://127.0.0.1:9222"
+$env:WECHAT_CDP_URL = "http://127.0.0.1:9222"
+```
+
+### 5. Run the unified digest
+
+```powershell
+python scripts\run_browser_social_digest.py --hours 24
+```
+
+The runner writes timestamped files under `output/`:
+
+- `browser_social_digest_*h_*.md`
+- `browser_social_digest_*h_*.json`
+- per-source snapshots for `X` and `WeChat`
+
+## X Workflow
+
+The `X` collector:
+
+- reads enabled accounts from `sources/x_accounts.csv`
+- opens a search URL per account using `from:username since:... until:...`
+- waits and scrolls in a more human-like rhythm
+- extracts text, timestamps, links, and engagement signals
+- writes sorted JSON and Markdown summaries
+
+Useful environment variables:
+
+```powershell
+$env:X_WINDOW_HOURS = "24"
+$env:X_ACCOUNT_OFFSET = "0"
+$env:X_ACCOUNT_LIMIT = "20"
+$env:X_RESET_OUTPUT = "1"
+```
+
+This makes chunked runs possible when `X` gets unstable.
+
+## WeChat Workflow
+
+The `WeChat` collector expects a Newrank candidate file, by default:
+
+```text
+output/wechat_48h_browser_scan_v3.json
+```
+
+For each candidate article it:
+
+1. opens the Newrank account detail page
+2. clicks the left-side article card
+3. reads the right-side detail panel
+4. clicks the large title in the right panel
+5. opens the original `mp.weixin.qq.com` article
+6. extracts the article body and metadata
+
+Required environment variable:
+
+```powershell
+$env:WECHAT_NEWRANK_TOKEN = "your_newrank_token"
+```
+
+Optional overrides:
+
+```powershell
+$env:WECHAT_WINDOW_HOURS = "24"
+$env:WECHAT_SCAN_FILE = "D:\path\to\wechat_scan.json"
+```
+
+## Codex Skill
+
+This repo includes a reusable Codex skill:
+
+- [`skills/browser-social-digest/SKILL.md`](./skills/browser-social-digest/SKILL.md)
+
+Use it when you want Codex to:
+
+- reuse the browser session
+- scrape recent `X` and `WeChat` updates
+- write a structured digest instead of raw notes
+
+## OpenClaw / OpenCode Integration
+
+Prompt templates for `OpenClaw` and `OpenCode` live here:
+
+- [`docs/openclaw-opencode-prompt-templates.md`](./docs/openclaw-opencode-prompt-templates.md)
+
+The short version:
+
+- do not ask those agents to “understand the whole repo” first
+- tell them exactly which script to run
+- tell them where the browser session lives
+- tell them where to write outputs
+
+## Privacy and Safety
+
+This public repo intentionally does **not** include:
+
+- your real `X` watchlist
+- your real `WeChat` watchlist
+- local browser profiles
+- cookies, access tokens, or session dumps
+- generated `output/` artifacts
+
+Only example watchlists and template configs are committed.
+
+## Known Limitations
+
+- `X` can still throw blank or error states under heavier browsing pressure
+- Newrank may enforce daily access limits
+- `WeChat` is not yet fully end-to-end from keyword search to candidate generation in one script
+- some logic still reflects a Windows-first workflow
+
+## Suggested Next Steps
+
+- add a dedicated Newrank scanning script from `sources/wechat_accounts.csv`
+- wrap the unified runner behind a small local API or MCP server
+- normalize more classifiers and summaries for public use
+- add Linux/macOS browser-launch helpers
+
+## License
+
+No license has been added yet. If you want broader reuse, add one before inviting outside contributions.
