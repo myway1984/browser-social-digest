@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Local config and secrets
+config.toml
+secrets/
+
+# Personal watchlists
+sources/x_accounts.csv
+sources/wechat_accounts.csv
+
+# Runtime state and outputs
+data/
+runtime/
+output/
+verify_output/
+verify_output_2/
+verify_data/
+verify_data_2/
+newrank_fetches/
+wechat_fetches/
+%TEMP%/
+
+# Browser/debug dumps and ad-hoc artifacts
+*.html
+*.json
+*.txt
+tmp_newrank_*.js
+
+# Keep shareable examples
+!config.example.toml
+!output/*.md
+!sources/*.example.csv

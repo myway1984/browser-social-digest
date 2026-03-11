@@ -1,0 +1,74 @@
+[app]
+timezone = "Asia/Shanghai"
+database_path = "data/social_digest.db"
+poll_interval_minutes = 30
+
+[digest]
+send_every_minutes = 720
+lookback_hours = 24
+max_items_per_source = 8
+title = "社交媒体追踪简报"
+
+[delivery]
+output_dir = "output"
+write_markdown = true
+print_to_console = true
+
+[delivery.email]
+enabled = false
+smtp_host = "smtp.qq.com"
+smtp_port = 465
+username = "your_mail@qq.com"
+password_env = "DIGEST_SMTP_PASSWORD"
+from_addr = "your_mail@qq.com"
+to_addrs = ["your_mail@qq.com"]
+use_ssl = true
+
+[[sources]]
+name = "X Monitor Pool"
+platform = "x"
+enabled = true
+usernames = ["OpenAI"]
+accounts_file = "sources/x_accounts.csv"
+default_category = "ai-tech"
+window_hours = 24
+fetch_overlap_minutes = 2
+max_results = 20
+max_pages = 3
+exclude_replies = true
+exclude_reposts = true
+strategy = "api_then_browser"
+bearer_token_env = "X_BEARER_TOKEN"
+remote_debug_profile_dir = "secrets/x_chrome_profile"
+remote_debug_port = 9222
+
+[[sources]]
+name = "微博示例"
+platform = "weibo"
+enabled = false
+uids = ["1195242865"]
+max_results = 10
+cookie_env = "WEIBO_COOKIE"
+
+[[sources]]
+name = "公众号素材库"
+platform = "wechat"
+enabled = false
+mode = "material_api"
+app_id_env = "WECHAT_APP_ID"
+app_secret_env = "WECHAT_APP_SECRET"
+max_results = 10
+
+[[sources]]
+name = "公众号 Feed 示例"
+platform = "wechat"
+enabled = false
+mode = "feed"
+feed_url = "https://example.com/wechat.xml"
+max_results = 10
+
+[[sources]]
+name = "调试样例"
+platform = "mock"
+enabled = false
+max_results = 3

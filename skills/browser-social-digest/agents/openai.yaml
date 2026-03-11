@@ -1,0 +1,4 @@
+interface:
+  display_name: "Browser Social Digest"
+  short_description: "Scrape X and WeChat through a logged-in Chrome session and structure the output."
+  default_prompt: "Use $browser-social-digest to scrape X and WeChat updates from the browser, then output a structured digest."
