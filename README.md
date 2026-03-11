@@ -191,6 +191,39 @@ The short version:
 - tell them where the browser session lives
 - tell them where to write outputs
 
+## Coze Integration
+
+This repo now also includes a minimal local HTTP API wrapper for `Coze` or any other tool-calling platform.
+
+Install the API extras:
+
+```powershell
+python -m pip install -e .[browser,api]
+```
+
+Start the local service:
+
+```powershell
+python scripts\serve_digest_api.py
+```
+
+Default address:
+
+```text
+http://127.0.0.1:8787
+```
+
+Main endpoints:
+
+- `GET /health`
+- `POST /digest/full`
+- `POST /digest/x`
+- `POST /digest/wechat`
+
+Detailed setup steps for `Coze` live here:
+
+- [`docs/coze-api-integration.md`](./docs/coze-api-integration.md)
+
 ## Privacy and Safety
 
 This public repo intentionally does **not** include:
@@ -213,7 +246,7 @@ Only example watchlists and template configs are committed.
 ## Suggested Next Steps
 
 - add a dedicated Newrank scanning script from `sources/wechat_accounts.csv`
-- wrap the unified runner behind a small local API or MCP server
+- expand the new local API into a fuller MCP or multi-tenant service
 - normalize more classifiers and summaries for public use
 - add Linux/macOS browser-launch helpers
 

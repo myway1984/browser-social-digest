@@ -17,6 +17,10 @@ dependencies = [
 browser = [
   "playwright>=1.52,<2",
 ]
+api = [
+  "fastapi>=0.116,<1",
+  "uvicorn>=0.35,<1",
+]
 
 [project.scripts]
 social-digest = "social_digest.cli:main"

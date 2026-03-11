@@ -7,10 +7,12 @@
 - `config.example.toml`
 - `config.verify.toml`
 - `pyproject.toml`
+- `docs/coze-api-integration.md`
 - `docs/openclaw-opencode-prompt-templates.md`
 - `scripts/collect_x_48h_from_browser.py`
 - `scripts/collect_wechat_48h_from_newrank.py`
 - `scripts/run_browser_social_digest.py`
+- `scripts/serve_digest_api.py`
 - `skills/browser-social-digest/SKILL.md`
 - `skills/browser-social-digest/agents/openai.yaml`
 - `sources/x_accounts.example.csv`
